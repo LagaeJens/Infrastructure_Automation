@@ -2,11 +2,11 @@
 
 set +e
 
-CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
+CURRENT_HOSTNAME=$(cat /etc/hostname | tr -d " \t\n\r")
 echo TDCsPi >/etc/hostname
 sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\tTDCsPi/g" /etc/hosts
-FIRSTUSER=`getent passwd 1000 | cut -d: -f1`
-FIRSTUSERHOME=`getent passwd 1000 | cut -d: -f6`
+FIRSTUSER=$(getent passwd 1000 | cut -d: -f1)
+FIRSTUSERHOME=$(getent passwd 1000 | cut -d: -f6)
 if [ -f /usr/lib/userconf-pi/userconf ]; then
    /usr/lib/userconf-pi/userconf 'pi' '$5$4uKIqHX.Jl$z1K.OtmQ5PXFtRSbLHLgODYOsk7/TQCgMCXU2IYrahB'
 else
@@ -15,7 +15,7 @@ else
       usermod -l "pi" "$FIRSTUSER"
       usermod -m -d "/home/pi" "pi"
       groupmod -n "pi" "$FIRSTUSER"
-      if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf ; then
+      if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf; then
          sed /etc/lightdm/lightdm.conf -i -e "s/^autologin-user=.*/autologin-user=pi/"
       fi
       if [ -f /etc/systemd/system/getty@tty1.service.d/autologin.conf ]; then
@@ -41,8 +41,8 @@ network={
 WPAEOF
 chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
 rfkill unblock wifi
-for filename in /var/lib/systemd/rfkill/*:wlan ; do
-  echo 0 > $filename
+for filename in /var/lib/systemd/rfkill/*:wlan; do
+   echo 0 >$filename
 done
 rm -f /etc/localtime
 echo "Europe/Brussels" >/etc/timezone

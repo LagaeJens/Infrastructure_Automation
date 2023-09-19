@@ -1,9 +1,21 @@
 # Set the file path
-$filePath = "E:/firstrun.sh"
+$filePath = "F:/firstrun.sh"
 $targetLine = "rm -f /boot/firstrun.sh"
+$checkString = "DHCPCDEO"
 
-# Define the content to be added
-$contentToAdd = @"
+# Read the existing contents of the file
+$fileContents = Get-Content -Path $filePath
+
+# Check if the content block exists in the file
+$blockExists = $fileContents -match [regex]::Escape($checkString)
+
+if ($blockExists) {
+    Write-Host "The content block already exists in the file."
+}
+else {
+    # Define the content to be added with Linux-style line endings
+    $contentToAdd = @"
+cat >>/etc/dhcpcd.conf <<'DHCPCDEOF'
 #
 # MCT - Computer Networks section
 #
@@ -17,24 +29,25 @@ fallback static_eth0
 #static ip_address=<IP address>/<prefix>
 #static routers=<IP address default gateway>
 #static domain_name_servers=<preferred DNS server> <alternate DNS server>
-
-DHCPCDEO
+DHCPCDEOF
 "@
 
-# Read the existing contents of the file
-$fileContents = Get-Content -Path $filePath
+    # Replace Windows-style line endings (CRLF) with Linux-style line endings (LF)
+    $contentToAdd = $contentToAdd -replace "`r`n", "`n"
 
-# Find the index of the target line
-$targetLineIndex = $fileContents.IndexOf($targetLine)
+    # Find the index of the target line
+    $targetLineIndex = $fileContents.IndexOf($targetLine)
 
-# Check if the target line was found
-if ($targetLineIndex -ge 0) {
-    # Insert the content before the target line
-    $fileContents = $fileContents[0..($targetLineIndex - 1)] + $contentToAdd + $fileContents[$targetLineIndex..($fileContents.Length - 1)]
+    # Check if the target line was found
+    if ($targetLineIndex -ge 0) {
+        # Insert the content before the target line
+        $fileContents = $fileContents[0..($targetLineIndex - 1)] + $contentToAdd + $fileContents[$targetLineIndex..($fileContents.Length - 1)]
 
-    # Write the updated content back to the file
-    $fileContents | Set-Content -Path $filePath
-}
-else {
-    Write-Host "Target line '$targetLine' not found in the file."
+        # Write the updated content back to the file with Linux-style line endings
+        $fileContents -join "`n" | Set-Content -Path $filePath
+        Write-Host "Content added to the file."
+    }
+    else {
+        Write-Host "Target line '$targetLine' not found in the file."
+    }
 }
