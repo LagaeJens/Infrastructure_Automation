@@ -1,20 +1,28 @@
-# Set the file path
-$filePath = "F:/firstrun.sh"
-$targetLine = "rm -f /boot/firstrun.sh"
-$checkString = "DHCPCDEO"
+# Define the file name to search for
+$fileName = "firstrun.sh"
 
-# Read the existing contents of the file
-$fileContents = Get-Content -Path $filePath
-
-# Check if the content block exists in the file
-$blockExists = $fileContents -match [regex]::Escape($checkString)
-
-if ($blockExists) {
-    Write-Host "The content block already exists in the file."
+# Get drive letters of attachable media (removable drives)
+$driveLetters = Get-WmiObject -Query "SELECT * FROM Win32_DiskDrive WHERE MediaType='Removable Media'" | ForEach-Object {
+    Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($_.DeviceID)'} WHERE AssocClass=Win32_DiskDriveToDiskPartition" | ForEach-Object {
+        Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($_.DeviceID)'} WHERE AssocClass=Win32_LogicalDiskToPartition" | ForEach-Object {
+            $_.DeviceID
+        }
+    }
 }
-else {
-    # Define the content to be added with Linux-style line endings
-    $contentToAdd = @"
+
+# Variable to track if any modifications were made
+$modificationsMade = $false
+$modifiedDriveLetter = $null
+
+# Function to modify the file on a given drive
+function ModifyFileOnDrive($driveLetter) {
+    $filePath = Join-Path -Path $driveLetter -ChildPath $fileName
+
+    if (Test-Path -Path $filePath -PathType Leaf) {
+        Write-Host "Modifying $fileName on drive $driveLetter"
+        
+        # Define the content to be added or modified
+        $contentToAddOrModify = @"
 cat >>/etc/dhcpcd.conf <<'DHCPCDEOF'
 #
 # MCT - Computer Networks section
@@ -32,22 +40,54 @@ fallback static_eth0
 DHCPCDEOF
 "@
 
-    # Replace Windows-style line endings (CRLF) with Linux-style line endings (LF)
-    $contentToAdd = $contentToAdd -replace "`r`n", "`n"
+        # Replace Windows-style line endings (CRLF) with Linux-style line endings (LF)
+        $contentToAddOrModify = $contentToAddOrModify -replace "`r`n", "`n"
 
-    # Find the index of the target line
-    $targetLineIndex = $fileContents.IndexOf($targetLine)
+        # Read the existing contents of the file
+        $fileContents = Get-Content -Path $filePath
 
-    # Check if the target line was found
-    if ($targetLineIndex -ge 0) {
-        # Insert the content before the target line
-        $fileContents = $fileContents[0..($targetLineIndex - 1)] + $contentToAdd + $fileContents[$targetLineIndex..($fileContents.Length - 1)]
+        # Check if the content "DHCPCDEOF" exists in the file
+        $blockExists = $fileContents -match "DHCPCDEOF"
 
-        # Write the updated content back to the file with Linux-style line endings
-        $fileContents -join "`n" | Set-Content -Path $filePath
-        Write-Host "Content added to the file."
+        if ($blockExists) {
+            Write-Host "The content block already exists in the file on drive $driveLetter. Already satisfied."
+        }
+        else {
+            # Find the index of the line "rm -f /boot/firstrun.sh"
+            $targetLineIndex = $fileContents.IndexOf("rm -f /boot/firstrun.sh")
+
+            if ($targetLineIndex -ge 0) {
+                # Insert the content before the target line
+                $fileContents = $fileContents[0..($targetLineIndex - 1)] + $contentToAddOrModify + $fileContents[$targetLineIndex..($fileContents.Length - 1)]
+            }
+            else {
+                # If the target line is not found, append the content to the end of the file
+                $fileContents += $contentToAddOrModify
+            }
+
+            # Write the updated content back to the file with Linux-style line endings
+            $fileContents -join "`n" | Set-Content -Path $filePath
+            Write-Host "File modified on drive $driveLetter."
+            $global:modificationsMade = $true
+            $global:modifiedDriveLetter = $driveLetter
+        }
     }
-    else {
-        Write-Host "Target line '$targetLine' not found in the file."
-    }
+}
+
+# Loop through each drive letter and modify the file
+foreach ($driveLetter in $driveLetters) {
+    ModifyFileOnDrive -driveLetter $driveLetter
+}
+
+# Display "File modification complete" or "Already satisfied"
+if ($modificationsMade) {
+    Write-Host "File modification complete."
+}
+else {
+    Write-Host "Already satisfied."
+}
+
+# Eject the drive that was modified
+if ($modifiedDriveLetter -ne $null) {
+    Eject-Drive -driveLetter $modifiedDriveLetter
 }
