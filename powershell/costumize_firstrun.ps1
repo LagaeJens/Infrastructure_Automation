@@ -74,6 +74,18 @@ DHCPCDEOF
     }
 }
 
+# Function to safely eject a removable drive by its drive letter
+function Eject-Drive($driveLetter) {
+    $ejectResult = Remove-Eject -DriveLetter $driveLetter
+
+    if ($ejectResult -eq $true) {
+        Write-Host "Drive $driveLetter has been safely ejected."
+    }
+    else {
+        Write-Host "Failed to eject drive $driveLetter."
+    }
+}
+
 # Loop through each drive letter and modify the file
 foreach ($driveLetter in $driveLetters) {
     ModifyFileOnDrive -driveLetter $driveLetter
