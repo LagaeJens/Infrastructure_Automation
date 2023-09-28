@@ -1,0 +1,42 @@
+interface gi0/0
+description WAN
+vlan 0
+ip address dhcp 
+no shutdown
+
+interface g0/1
+description LAN
+vlan 10
+ip address 192.168.10.254 255.255.255.0
+no shutdown
+
+interface g0/1
+description Accounting
+vlan 20
+ip address 192.168.20.254 255.255.255.0
+no shutdown
+
+interface g0/1
+description HR
+vlan 30
+ip address 192.168.30.254 255.255.255.0
+no shutdown
+
+interface g0/1
+description Marketing
+vlan 40
+ip address 192.168.40.254 255.255.255.0
+no shutdown
+
+interface g0/1
+description Production
+vlan 50
+ip address 192.168.50.254 255.255.255.0
+no shutdown
+
+access-list 1 permit dhcp 
+access-list 1 permit 192.168.10.254 255.255.255.0
+access-list 1 permit 192.168.20.254 255.255.255.0
+access-list 1 permit 192.168.30.254 255.255.255.0
+access-list 1 permit 192.168.40.254 255.255.255.0
+access-list 1 permit 192.168.50.254 255.255.255.0

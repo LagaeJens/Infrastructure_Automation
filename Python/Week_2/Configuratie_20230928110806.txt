@@ -1,0 +1,41 @@
+//ROUTER wan
+conf t
+int gi0/0
+descr WAN
+vlan 0
+ip address dhcp 
+no shut
+
+
+//ROUTER lan
+conf t
+int g0/1
+descr LAN
+vlan 10
+ip address 192.168.10.254 255.255.255.0
+no shut
+
+int g0/1
+descr Accounting
+vlan 20
+ip address 192.168.20.254 255.255.255.0
+no shut
+
+int g0/1
+descr HR
+vlan 30
+ip address 192.168.30.254 255.255.255.0
+no shut
+
+int g0/1
+descr Marketing
+vlan 40
+ip address 192.168.40.254 255.255.255.0
+no shut
+
+int g0/1
+descr Production
+vlan 50
+ip address 192.168.50.254 255.255.255.0
+no shut
+
