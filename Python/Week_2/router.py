@@ -48,7 +48,7 @@ def generate_cisco_config(input_csv, output_txt):
 
 if __name__ == "__main__":
     # Replace these with your actual file paths
-    input_csv = "   "
+    input_csv = "D:\Howest\Infrastructure_Automation\Github_oefeningen\Infrastructure_Automation\Python\Week_2\Voorbeeld_1.csv"
     now = datetime.datetime.now()
     output_txt = f"Infrastructure_Automation/Python/Week_2/Configuratie_{now.strftime('%Y%m%d%H%M%S')}.txt"
 
