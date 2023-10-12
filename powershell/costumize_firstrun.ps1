@@ -12,7 +12,6 @@ $driveLetters = Get-WmiObject -Query "SELECT * FROM Win32_DiskDrive WHERE MediaT
 
 # Variable to track if any modifications were made
 $modificationsMade = $false
-$modifiedDriveLetter = $null
 
 # Function to modify the file on a given drive
 function ModifyFileOnDrive($driveLetter) {
@@ -69,20 +68,7 @@ DHCPCDEOF
             $fileContents -join "`n" | Set-Content -Path $filePath
             Write-Host "File modified on drive $driveLetter."
             $global:modificationsMade = $true
-            $global:modifiedDriveLetter = $driveLetter
         }
-    }
-}
-
-# Function to safely eject a removable drive by its drive letter
-function Eject-Drive($driveLetter) {
-    $ejectResult = Remove-Eject -DriveLetter $driveLetter
-
-    if ($ejectResult -eq $true) {
-        Write-Host "Drive $driveLetter has been safely ejected."
-    }
-    else {
-        Write-Host "Failed to eject drive $driveLetter."
     }
 }
 
@@ -97,9 +83,4 @@ if ($modificationsMade) {
 }
 else {
     Write-Host "Already satisfied."
-}
-
-# Eject the drive that was modified
-if ($modifiedDriveLetter -ne $null) {
-    Eject-Drive -driveLetter $modifiedDriveLetter
 }
